@@ -14,5 +14,8 @@ public class MainActivity extends AppCompatActivity {
         drawPane = (RelativeLayout) findViewById(R.id.drawPane);
         drawView = new DrawView(this);
         drawPane.addView(drawView);
+        drawPane.setOnTouchListener(drawView);
+        findViewById(R.id.fastBtn).setOnClickListener(drawView);
+        findViewById(R.id.slowBtn).setOnClickListener(drawView);
     }
 }
