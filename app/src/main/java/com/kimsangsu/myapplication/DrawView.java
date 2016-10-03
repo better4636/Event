@@ -14,7 +14,7 @@ import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
-public class DrawView extends View implements View.OnTouchListener,View.OnClickListener{
+public class DrawView extends View implements View.OnTouchListener,View.OnClickListener,Runnable{
     Paint paint;
     private float x,y,dx,dy,ch,cw;
     private int select;  private Bitmap[] rabit;
@@ -34,7 +34,10 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
         mHandler.sendEmptyMessage(0);
         this.context = context; t = new Toast(context);
         t = Toast.makeText(context,"start",Toast.LENGTH_SHORT);
+        Thread thread = new Thread(this);
+        thread.start();
     }
+
     public void onDraw(Canvas canvas) {
         canvas.drawColor(Color.LTGRAY);
         canvas.drawBitmap(rabit[select],x,y,paint);
@@ -44,16 +47,8 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            x += dx; y += dy;
-                if (x < 0||x >= MainActivity.drawPane.getWidth() - cw) {
-                    dx = -dx;
-                }
-                if (y < 0||y >= MainActivity.drawPane.getHeight() - ch) {
-                    dy = -dy;
-                }
-            select = (select+1)%2;
-            invalidate();
-            mHandler.sendEmptyMessageDelayed(0,1000);
+            if(msg.what == 1)
+                invalidate();
         }
     };
 
@@ -69,6 +64,18 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
         if(event.getAction() == MotionEvent.ACTION_MOVE) {
             x = event.getX();
             y = event.getY();
+            if (event.getX() >= MainActivity.drawPane.getWidth() - cw) {
+                x = MainActivity.drawPane.getWidth()-cw;
+            }
+            if(event.getX() < 0) {
+                x = 0;
+            }
+            if (y >= MainActivity.drawPane.getHeight() - ch) {
+                y = MainActivity.drawPane.getHeight()-ch;
+            }
+            if(y < 0) {
+                y = 0;
+            }
             mHandler.removeCallbacksAndMessages(null);
             invalidate();
             return true;
@@ -83,7 +90,6 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
 
     @Override
     public void onClick(View v) {
-
         switch (v.getId()) {
             case R.id.fastBtn:
                 if(Math.abs(dx) != 150) {
@@ -96,7 +102,6 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
                         dy -= 5;
                     }
                     t.setText("Speed Up = " +Math.abs(dx));
-
                 }
                 else {
                     t.setText("Max Speed !");
@@ -123,23 +128,27 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
 
     }
 
-
-    /* Thread version 사용이 안된다 이유는 ?
-     * 안드로이드에선 ui 즉 화면을 변경하는것은 오직 메인스레드에서만 가능하다.
-     * Handler나 CountDownTimer 등의 서브스레드가 있는 이유는 이것이다.
-     */
-    /*
     @Override
     public void run() {
         while(true) {
             try {
                 Thread.sleep(1000);
             }catch (Exception e) {
+
             }finally {
-                x += dx;
-                y += dy;
-                invalidate();
+                x += dx; y += dy;
+                //벽에 닿으면 캐릭터의 방향을 바꾼다.
+                if (x < 0 || x >= MainActivity.drawPane.getWidth() - cw) {
+                    dx = -dx;
+                }
+                if (y < 0 || y >= MainActivity.drawPane.getHeight() - ch) {
+                    dy = -dy;
+                }
+                select = (select+1)%2;
+                Message message = Message.obtain();
+                message.what =1;
+                mHandler.sendMessage(message);
             }
         }
-    }*/
+    }
 }
