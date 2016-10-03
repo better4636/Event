@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.widget.RelativeLayout;
 
 public class MainActivity extends AppCompatActivity {
-    private RelativeLayout drawPane;
+    public static RelativeLayout drawPane;
     private DrawView drawView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
