@@ -18,8 +18,8 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
     Paint paint;
     private float x,y,dx,dy,ch,cw;
     private int select;  private Bitmap[] rabit;
-    private Context context;
-    private Toast t;
+    private Context context; private volatile boolean isRun = true;
+    private Toast t; private Thread thread;
 
 
     public DrawView(Context context) {
@@ -34,7 +34,7 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
         mHandler.sendEmptyMessage(0);
         this.context = context; t = new Toast(context);
         t = Toast.makeText(context,"start",Toast.LENGTH_SHORT);
-        Thread thread = new Thread(this);
+        thread = new Thread(this);
         thread.start();
     }
 
@@ -64,6 +64,7 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
         if(event.getAction() == MotionEvent.ACTION_MOVE) {
             x = event.getX();
             y = event.getY();
+            isRun = false;
             if (event.getX() >= MainActivity.drawPane.getWidth() - cw) {
                 x = MainActivity.drawPane.getWidth()-cw;
             }
@@ -76,12 +77,11 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
             if(y < 0) {
                 y = 0;
             }
-            mHandler.removeCallbacksAndMessages(null);
             invalidate();
             return true;
         }
         if(event.getAction() == MotionEvent.ACTION_UP) {
-            mHandler.sendEmptyMessage(0);
+            isRun = true;
         }
 
         return false;
@@ -92,14 +92,22 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.fastBtn:
-                if(Math.abs(dx) != 150) {
-                    if(dx > 0) {
-                        dx += 5;
-                        dy += 5;
-                    }
-                    else {
-                        dx -= 5;
+                if(Math.abs(dx) != 100) {
+                    if(dx >= 0 && dy <= 0) {
                         dy -= 5;
+                        dx += 5;
+                    }
+                    else if(dx <= 0 && dy >= 0){
+                        dy += 5;
+                        dx -= 5;
+                    }
+                    else if(dx >=0 && dy >= 0) {
+                        dy += 5;
+                        dx += 5;
+                    }
+                    else if(dx <=0 && dy <=0) {
+                        dy -= 5;
+                        dx -= 5;
                     }
                     t.setText("Speed Up = " +Math.abs(dx));
                 }
@@ -108,12 +116,20 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
                 }
                 break;
             case R.id.slowBtn:
-                if(Math.abs(dx) != 0) {
-                    if(dx > 0) {
+                if(Math.abs(dx) != 10) {
+                    if(dx > 10 && dy < 10) {
+                        dy += 5;
+                        dx -= 5;
+                    }
+                    else if(dx < 10 && dy > 10){
+                        dy -= 5;
+                        dx += 5;
+                    }
+                    else if(dx >10 && dy > 10) {
                         dy -= 5;
                         dx -= 5;
                     }
-                    else {
+                    else if(dx <10 && dy <10) {
                         dy += 5;
                         dx += 5;
                     }
@@ -131,6 +147,8 @@ public class DrawView extends View implements View.OnTouchListener,View.OnClickL
     @Override
     public void run() {
         while(true) {
+            while (!isRun)
+                thread.yield();
             try {
                 Thread.sleep(1000);
             }catch (Exception e) {
